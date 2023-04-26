@@ -1,9 +1,8 @@
-import sqlite3
+from utilities import connect_to_db
 
 
 def create_table():
-    conn = sqlite3.connect('./sqlite.db')
-    cursor = conn.cursor()
+    cursor = connect_to_db()
     table = """
         CREATE TABLE customs_tracker (
             ID INTEGER PRIMARY_KEY,

@@ -1,12 +1,11 @@
-# bot.py
 import os
 import random
 
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from table2ascii import Alignment, PresetStyle
-from table2ascii import table2ascii as t2a
+
+from utilities import get_teams_table
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -21,7 +20,11 @@ async def customs(ctx):
     if not voice_state:
         return
 
-    member_names = [x.name for x in voice_state.channel.voice_members]
+    member_names = [x.name for x in voice_state.channel.members]
+
+    # TESTING override member_names for testing
+    member_names = [str(num) for num in range(10)]
+
     members_count = len(member_names)
 
     if members_count < 10:
@@ -35,11 +38,14 @@ async def customs(ctx):
     team_one = member_names[: members_count // 2]
     team_two = member_names[members_count // 2 :]
 
-    team_one_text = '\n'.join(team_one)
-    team_two_text = '\n'.join(team_two)
-    output = f'{get_intro(member_names)}\n>>> **Blue Team:**\n{team_one_text}\n\n--------------------\n\n**RedTeam:**\n{team_two_text}'
+    title = '*** Probably Customs ***'
+    headers = ['Blue Team', 'Red Team']
+    body = []
+    for i in range(5):
+        body.append([team_one[i], team_two[i]])
 
-    await ctx.channel.send(f'''\n{output}\n''')
+    output = get_teams_table(headers, body)
+    await ctx.send(f"```\n{title}\n\n{output}\n```")
 
 
 # @bot.command(name='points', help='Displays Magic Internet Points')
@@ -127,15 +133,6 @@ async def customs(ctx):
 
 #     except HttpError as err:
 #         print(err)
-
-
-def get_table(headers, body):
-    return t2a(
-        header=headers,
-        body=body,
-        style=PresetStyle.simple,
-        alignments=[Alignment.LEFT, Alignment.RIGHT, Alignment.LEFT, Alignment.CENTER],
-    )
 
 
 def calc_win_rate(wins, games):
