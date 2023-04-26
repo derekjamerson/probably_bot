@@ -1,11 +1,11 @@
-from utilities import connect_to_db
+from db_utilities import connect_to_db
 
 
 def create_table():
-    cursor = connect_to_db()
+    conn = connect_to_db()
+    cursor = conn.cursor()
     table = """
-        CREATE TABLE customs_tracker (
-            ID INTEGER PRIMARY_KEY,
+        CREATE TABLE Magic_Internet_Points (
             Name VARCHAR(50) NOT NULL,
             Wins INT(10) NOT NULL DEFAULT 0,
             Games INT(10) NOT NULL DEFAULT 0

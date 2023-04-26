@@ -1,11 +1,13 @@
 import os
 import random
+import sqlite3
 
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from utilities import get_teams_table
+from db_utilities import connect_to_db
+from utilities import get_points_table, get_teams_table
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -46,42 +48,30 @@ async def customs(ctx):
     await ctx.send(f"```\n{title}\n\n{output}\n```")
 
 
-# @bot.command(name='points', help='Displays Magic Internet Points')
-# async def magic_internet_points(ctx):
-#     client = oauth()
+@bot.command(name='points', help='Displays Magic Internet Points')
+async def magic_internet_points(ctx):
+    conn = connect_to_db()
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("""SELECT * FROM Magic_Internet_Points""")
 
-#     sheet = client.open('Magic Internet Points').sheet1
-#     ss_result = sheet.get_all_records()
-#     print(ss_result)
-#     rows = ss_result.get('values', [])
+    rows = cursor.fetchall()
+    rows.sort(key=lambda x: calc_win_rate(x['Wins'], x['Games']))
+    rows.reverse()
 
-#     if not rows:
-#         print('No data found.')
-#         return
+    headers = rows[0].keys()
+    headers.append('Win Rate')
 
+    body = []
+    for row in rows:
+        win_rate = calc_win_rate(row['Wins'], row['Games'])
+        percent_string = '{:.2%}'.format(win_rate) if win_rate >= 0 else 'NEW'
+        body.append([row['Name'], row['Wins'], row['Games'], percent_string])
 
-#     headers = []
-#     for header in rows.pop(0):
-#         headers.append(header)
-#     headers.append('Win Rate')
+    title = '*** Magic Internet Points ***'
+    output = get_points_table(headers, body)
 
-#     rows.sort(key=lambda x: calc_win_rate(x[1], x[2]))
-#     rows.reverse()
-#     body = []
-#     for row in rows:
-#         name = row[0]
-#         wins = row[1]
-#         games = row[2]
-
-#         win_rate = calc_win_rate(wins, games)
-#         percent_string = '{:.2%}'.format(win_rate) if win_rate >= 0 else 'NEW'
-
-#         body.append([name, wins, games, percent_string])
-
-#     title= '*** Magic Internet Points ***'
-#     output = get_table(headers, body)
-
-#     await ctx.send(f"```\n{title}\n\n{output}\n```")
+    await ctx.send(f"```\n{title}\n\n{output}\n```")
 
 
 # @bot.command(name='win', help='Records winner of game')
