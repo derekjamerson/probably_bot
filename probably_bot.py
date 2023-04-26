@@ -1,25 +1,23 @@
 # bot.py
 import os
 import random
+import sqlite3
 
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
+from table2ascii import Alignment, table2ascii as t2a, PresetStyle
 
-from table2ascii import table2ascii as t2a, PresetStyle
+from oauth2client.service_account import ServiceAccountCredentials
 
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 intents=discord.Intents.all()
 bot = commands.Bot(command_prefix='!', intents=intents)
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+
+
 
 
 @bot.command(name='customs', help='Creates 2 teams of 5')
@@ -50,97 +48,101 @@ async def customs(ctx):
     await ctx.channel.send(f'''\n{output}\n''')
 
 
-@bot.command(name='points', help='Displays Magic Internet Points')
-async def magic_internet_points(ctx):
-    creds = oauth()
+# @bot.command(name='points', help='Displays Magic Internet Points')
+# async def magic_internet_points(ctx):
+#     client = oauth()
 
-    try:
-        service = build('sheets', 'v4', credentials=creds)
-        sheet = service.spreadsheets()
-        ss_result = sheet.values().get(spreadsheetId='1V7ChDsT15t4PG_7WQ5jHO8il7FvT5w2hl5vrh7Hb1po', range="Sheet1").execute()
-        rows = ss_result.get('values', [])
+#     sheet = client.open('Magic Internet Points').sheet1
+#     ss_result = sheet.get_all_records()
+#     print(ss_result)
+#     rows = ss_result.get('values', [])
 
-        if not rows:
-            print('No data found.')
-            return
+#     if not rows:
+#         print('No data found.')
+#         return
 
-        title= '*** Magic Internet Points ***'
 
-        headers = []
-        for header in rows.pop(0):
-            headers.append(header)
-        headers.append('Win Rate')
+#     headers = []
+#     for header in rows.pop(0):
+#         headers.append(header)
+#     headers.append('Win Rate')
 
-        rows.sort(key=lambda x: calc_win_rate(x[1], x[2]))
-        rows.reverse()
-        body = []
-        for row in rows:
-            name = row[0]
-            wins = row[1]
-            games = row[2]
+#     rows.sort(key=lambda x: calc_win_rate(x[1], x[2]))
+#     rows.reverse()
+#     body = []
+#     for row in rows:
+#         name = row[0]
+#         wins = row[1]
+#         games = row[2]
 
-            win_rate = calc_win_rate(wins, games)
-            percent_string = '{:.2%}'.format(win_rate) if win_rate >= 0 else 'NEW'
+#         win_rate = calc_win_rate(wins, games)
+#         percent_string = '{:.2%}'.format(win_rate) if win_rate >= 0 else 'NEW'
 
-            body.append([name, wins, games, percent_string])
+#         body.append([name, wins, games, percent_string])
 
-        output = t2a(
+#     title= '*** Magic Internet Points ***'
+#     output = get_table(headers, body)
+
+#     await ctx.send(f"```\n{title}\n\n{output}\n```")
+
+
+
+# @bot.command(name='win', help='Records winner of game')
+# async def win(ctx):
+#     client = oauth()
+
+#     try:
+#         service = build('sheets', 'v4', credentials=client)
+#         sheet = service.spreadsheets()
+#         ss_result = sheet.values().get(spreadsheetId='1V7ChDsT15t4PG_7WQ5jHO8il7FvT5w2hl5vrh7Hb1po', range="Sheet1").execute()
+#         rows = ss_result.get('values', [])
+
+#         if not rows:
+#             print('No data found.')
+#             return
+
+#         headers = []
+#         for header in rows.pop(0):
+#             headers.append(header)
+#         headers.append('Win Rate')
+
+
+#         ## UPDATE VALUES HERE
+#         valueRange = newValueRange();
+#         valueRange.values = values;
+#         const result = Sheets.Spreadsheets.Values.update(valueRange, spreadsheetId, range, {valueInputOption: valueInputOption});
+#         return result;
+
+
+#         rows.sort(key=lambda x: calc_win_rate(x[1], x[2]))
+#         rows.reverse()
+#         body = []
+#         for row in rows:
+#             name = row[0]
+#             wins = row[1]
+#             games = row[2]
+
+#             win_rate = calc_win_rate(wins, games)
+#             percent_string = '{:.2%}'.format(win_rate) if win_rate >= 0 else 'NEW'
+
+#             body.append([name, wins, games, percent_string])
+
+#         title= '*** Magic Internet Points ***'
+#         output = get_table(headers, body)
+
+#         await ctx.send(f'"\nScore Recorded\n```\n{title}\n\n{output}\n```"')
+
+#     except HttpError as err:
+#         print(err)
+
+
+def get_table(headers, body):
+    return t2a(
             header=headers,
             body=body,
             style=PresetStyle.simple,
+            alignments=[Alignment.LEFT, Alignment.RIGHT, Alignment.LEFT, Alignment.CENTER],
         )
-
-        await ctx.send(f"```\n{title}\n\n{output}\n```")
-
-    except HttpError as err:
-        print(err)
-
-
-@bot.command(name='win', help='Records winner of game')
-async def win(ctx):
-    creds = oauth()
-
-    try:
-        service = build('sheets', 'v4', credentials=creds)
-        sheet = service.spreadsheets()
-        ss_result = sheet.values().get(spreadsheetId='1V7ChDsT15t4PG_7WQ5jHO8il7FvT5w2hl5vrh7Hb1po', range="Sheet1").execute()
-        rows = ss_result.get('values', [])
-
-        if not rows:
-            print('No data found.')
-            return
-
-        title= '*** Magic Internet Points ***'
-
-        headers = []
-        for header in rows.pop(0):
-            headers.append(header)
-        headers.append('Win Rate')
-
-        rows.sort(key=lambda x: calc_win_rate(x[1], x[2]))
-        rows.reverse()
-        body = []
-        for row in rows:
-            name = row[0]
-            wins = row[1]
-            games = row[2]
-
-            win_rate = calc_win_rate(wins, games)
-            percent_string = '{:.2%}'.format(win_rate) if win_rate >= 0 else 'NEW'
-
-            body.append([name, wins, games, percent_string])
-
-        output = t2a(
-            header=headers,
-            body=body,
-            style=PresetStyle.simple,
-        )
-
-        await ctx.send(f'"\nScore Recorded\n```\n{title}\n\n{output}\n```"')
-
-    except HttpError as err:
-        print(err)
-
 
 def calc_win_rate(wins, games):
     wins = int(wins)
@@ -178,22 +180,6 @@ def get_intro(member_names):
         f'{random.choice(range(5, 15))}. Mid 0 Vision Score',
         ]
     return random.choice(options)
-
-def oauth():
-    creds = None
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)
-            creds = flow.run_local_server(port=0)
-        with open('token.json', 'w') as token:
-            token.write(creds.to_json())
-
-    return creds
 
 
 if __name__ == '__main__':
