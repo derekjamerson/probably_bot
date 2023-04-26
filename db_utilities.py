@@ -18,6 +18,4 @@ def insert_test_data():
     cursor = conn.cursor()
     cursor.execute(sql)
     conn.commit()
-    print('rowcount', cursor.rowcount)
-    print(list(cursor.execute("""SELECT * FROM Magic_Internet_Points""")))
     conn.close()
