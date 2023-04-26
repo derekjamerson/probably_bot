@@ -1,3 +1,4 @@
+import json
 import os
 import random
 import sqlite3
@@ -7,7 +8,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 from db_utilities import connect_to_db
-from utilities import get_points_table, get_teams_table
+from utilities import calc_win_rate, get_points_table, get_teams_table
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -36,16 +37,31 @@ async def customs(ctx):
         await ctx.channel.send('Too many niggas!')
         return
 
-    random.shuffle(member_names)
-
     title = '*** Probably Customs ***'
     headers = ['Blue Team', 'Red Team']
+
+    random.shuffle(member_names)
+    blue_team = member_names[:5]
+    red_team = member_names[5:]
+
     body = []
     for i in range(5):
-        body.append([member_names[i], member_names[i + 5]])
+        body.append([blue_team[i], red_team[i]])
 
     output = get_teams_table(headers, body)
     await ctx.send(f"```\n{title}\n\n{output}\n```")
+
+    sql = """
+        INSERT INTO Current_Game ('Blue', 'Red')
+        VALUES
+            (?, ?);
+    """
+
+    conn = connect_to_db()
+    cursor = conn.cursor()
+    cursor.execute(sql, [json.dumps(blue_team), json.dumps(red_team)])
+    conn.commit()
+    conn.close()
 
 
 @bot.command(name='points', help='Displays Magic Internet Points')
@@ -72,92 +88,12 @@ async def magic_internet_points(ctx):
     output = get_points_table(headers, body)
 
     await ctx.send(f"```\n{title}\n\n{output}\n```")
+    conn.close()
 
 
-# @bot.command(name='win', help='Records winner of game')
-# async def win(ctx):
-#     client = oauth()
-
-#     try:
-#         service = build('sheets', 'v4', credentials=client)
-#         sheet = service.spreadsheets()
-#         ss_result = sheet.values().get(spreadsheetId='1V7ChDsT15t4PG_7WQ5jHO8il7FvT5w2hl5vrh7Hb1po', range="Sheet1").execute()
-#         rows = ss_result.get('values', [])
-
-#         if not rows:
-#             print('No data found.')
-#             return
-
-#         headers = []
-#         for header in rows.pop(0):
-#             headers.append(header)
-#         headers.append('Win Rate')
-
-
-#         ## UPDATE VALUES HERE
-#         valueRange = newValueRange();
-#         valueRange.values = values;
-#         const result = Sheets.Spreadsheets.Values.update(valueRange, spreadsheetId, range, {valueInputOption: valueInputOption});
-#         return result;
-
-
-#         rows.sort(key=lambda x: calc_win_rate(x[1], x[2]))
-#         rows.reverse()
-#         body = []
-#         for row in rows:
-#             name = row[0]
-#             wins = row[1]
-#             games = row[2]
-
-#             win_rate = calc_win_rate(wins, games)
-#             percent_string = '{:.2%}'.format(win_rate) if win_rate >= 0 else 'NEW'
-
-#             body.append([name, wins, games, percent_string])
-
-#         title= '*** Magic Internet Points ***'
-#         output = get_table(headers, body)
-
-#         await ctx.send(f'"\nScore Recorded\n```\n{title}\n\n{output}\n```"')
-
-#     except HttpError as err:
-#         print(err)
-
-
-def calc_win_rate(wins, games):
-    wins = int(wins)
-    games = int(games)
-    if not games:
-        return -1
-
-    return wins / games
-
-
-def get_intro(member_names):
-    options = [
-        'Probably Customs',
-        'Get your Party Cardi!',
-        'Put on your try-hard pants',
-        "LET'S FUCKING GO!!!!!!!",
-        'Come Get Some',
-        'Bouta be a JUNGLE GAP',
-        'Support is rrrrrrrrrRunning it down',
-        'Forecasting a Flame Horizon',
-        f'First Blood, 0:{random.choice(range(30, 60))}, bot river',
-        f'First Blood, 1:{random.choice(range(0, 60))}, bot'
-        f'First Blood: {random.choice(member_names)}',
-        f'Target Ban Locked: {random.choice(member_names)}',
-        f'WARNING! {random.choice(member_names)} Pop Off Incoming!',
-        f"No {random.choice(member_names)}, don't do it to 'em.",
-        'Ugh, go next...',
-        f'Report {random.choice(member_names)}. Soft-inting.',
-        "Fuck 'em up!",
-        "Jungle ASol... you won't",
-        'This is gonna be a baka-laka-ham-dak',
-        'Turn these idiots into CONVERTIBLES',
-        "Show 'em their shit don't fit in your pocket",
-        f'{random.choice(range(5, 15))}. Mid 0 Vision Score',
-    ]
-    return random.choice(options)
+@bot.command(name='win', help='Records winner of game')
+async def win(ctx):
+    pass
 
 
 if __name__ == '__main__':

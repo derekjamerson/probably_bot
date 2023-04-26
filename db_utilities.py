@@ -20,3 +20,4 @@ def insert_test_data():
     conn.commit()
     print('rowcount', cursor.rowcount)
     print(list(cursor.execute("""SELECT * FROM Magic_Internet_Points""")))
+    conn.close()
