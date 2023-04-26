@@ -35,14 +35,12 @@ async def customs(ctx):
         return
 
     random.shuffle(member_names)
-    team_one = member_names[: members_count // 2]
-    team_two = member_names[members_count // 2 :]
 
     title = '*** Probably Customs ***'
     headers = ['Blue Team', 'Red Team']
     body = []
     for i in range(5):
-        body.append([team_one[i], team_two[i]])
+        body.append([member_names[i], member_names[i + 5]])
 
     output = get_teams_table(headers, body)
     await ctx.send(f"```\n{title}\n\n{output}\n```")

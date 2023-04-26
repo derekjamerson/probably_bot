@@ -1,7 +1,6 @@
 import sqlite3
 
-import table2ascii
-from table2ascii import Alignment, TableStyle
+from table2ascii import Alignment, PresetStyle, TableStyle
 from table2ascii import table2ascii as t2a
 
 
@@ -15,7 +14,7 @@ def get_points_table(headers, body):
     return t2a(
         header=headers,
         body=body,
-        style=table2ascii.PresetStyle.simple,
+        style=PresetStyle.simple,
         alignments=[Alignment.LEFT, Alignment.RIGHT, Alignment.LEFT, Alignment.CENTER],
     )
 
