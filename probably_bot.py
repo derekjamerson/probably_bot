@@ -60,15 +60,19 @@ async def customs(ctx):
     await ctx.message.add_reaction(THUMBS_UP)
     await ctx.send(f"```\n{title}\n\n{output}\n```")
 
-    sql = """
+    sql_new = """
         INSERT INTO Current_Game (Blue, Red)
         VALUES (?, ?);
+    """
+    sql_old = """
+        UPDATE Current_Game
+        SET Active = 0
     """
 
     conn = connect_to_db()
     cursor = conn.cursor()
-    cursor.execute('DELETE FROM Current_Game;')
-    cursor.execute(sql, (json.dumps(blue_team), json.dumps(red_team)))
+    cursor.execute(sql_old)
+    cursor.execute(sql_new, (json.dumps(blue_team), json.dumps(red_team)))
     conn.commit()
     conn.close()
 
@@ -109,7 +113,7 @@ async def win(ctx):
     conn.row_factory = sqlite3.Row
     cursor_query = conn.cursor()
     cursor_query.execute(
-        """SELECT * FROM Current_Game WHERE rowid = (SELECT MAX(rowid) FROM Current_Game)""",
+        """SELECT Blue, Red FROM Current_Game WHERE rowid = (SELECT MAX(rowid) FROM Current_Game) AND Active = 1""",
     )
     row = cursor_query.fetchone()
 
@@ -138,12 +142,16 @@ async def win(ctx):
         SET Wins = Wins + 1
         WHERE Name in (?,?,?,?,?);
     """
+    sql_old = """
+        UPDATE Current_Game
+        SET Active = 0
+    """
 
     cursor_result = conn.cursor()
     cursor_result.executemany(sql_insert, all_players)
     cursor_result.execute(sql_games, all_players)
     cursor_result.execute(sql_wins, winners)
-    cursor_result.execute('DELETE FROM Current_Game;')
+    cursor_result.execute(sql_old)
     conn.commit()
     conn.close()
 

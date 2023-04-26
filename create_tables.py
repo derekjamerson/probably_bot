@@ -16,7 +16,8 @@ def create_tables():
     table_current_game = """
         CREATE TABLE Current_Game (
             Blue VARCHAR(300) NOT NULL,
-            Red VARCHAR(300) NOT NULL
+            Red VARCHAR(300) NOT NULL,
+            Active BIT DEFAULT 1
         );
     """
     cursor.execute(table_current_game)
@@ -25,11 +26,12 @@ def create_tables():
         CREATE TABLE Isms (
             Person VARCHAR(20),
             Quote VARCHAR(200) NOT NULL,
-            Author VARCHAR(20) NOT NULL
+            Author INT(1) NOT NULL
         );
     """
     cursor.execute(table_isms)
 
+    conn.commit()
     conn.close()
 
 
