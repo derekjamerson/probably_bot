@@ -21,6 +21,15 @@ def create_tables():
     """
     cursor.execute(table_current_game)
 
+    table_isms = """
+        CREATE TABLE Isms (
+            Person VARCHAR(20),
+            Quote VARCHAR(200) NOT NULL,
+            Author VARCHAR(20) NOT NULL
+        );
+    """
+    cursor.execute(table_isms)
+
     conn.close()
 
 

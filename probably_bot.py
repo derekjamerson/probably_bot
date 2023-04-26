@@ -151,5 +151,20 @@ async def win(ctx):
     await magic_internet_points(ctx)
 
 
+@bot.command(name='isms', help='Add an "-ism"')
+async def add_ism(ctx, quote, person=None):
+    author = ctx.author
+    conn = connect_to_db()
+    cursor = conn.cursor()
+    sql = """
+        INSERT INTO Isms (Person, Quote, Author)
+        VALUES (?, ?, ?)
+    """
+    cursor.execute(sql, [person, quote, author])
+    conn.commit()
+    conn.close()
+    await ctx.message.add_reaction(THUMBS_UP)
+
+
 if __name__ == '__main__':
     bot.run(TOKEN)
