@@ -59,6 +59,7 @@ async def customs(ctx):
 
     conn = connect_to_db()
     cursor = conn.cursor()
+    cursor.execute('DELETE FROM Current_Game;')
     cursor.execute(sql, [json.dumps(blue_team), json.dumps(red_team)])
     conn.commit()
     conn.close()
