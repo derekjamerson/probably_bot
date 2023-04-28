@@ -21,6 +21,7 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='!', intents=intents)
+working_ctx = None
 
 
 @bot.command(name='customs', help='Create 2 teams of 5')
@@ -57,24 +58,24 @@ async def customs(ctx):
     for i in range(5):
         body.append([blue_team[i], red_team[i]])
 
-    output = get_teams_table(headers, body)
+    conn = connect_to_db()
+    cursor = conn.cursor()
+
+    sql_old = """
+        UPDATE Current_Game
+        SET Active = 0
+    """
+    cursor.execute(sql_old)
 
     sql_new = """
         INSERT INTO Current_Game (Blue, Red)
         VALUES (?, ?);
     """
-    sql_old = """
-        UPDATE Current_Game
-        SET Active = 0
-    """
-
-    conn = connect_to_db()
+    cursor.execute(sql_new, (json.dumps(blue_team), json.dumps(red_team)))
 
     ism = get_ism(conn)
+    output = get_teams_table(headers, body)
 
-    cursor = conn.cursor()
-    cursor.execute(sql_old)
-    cursor.execute(sql_new, (json.dumps(blue_team), json.dumps(red_team)))
     conn.commit()
     conn.close()
 
@@ -106,9 +107,9 @@ async def magic_internet_points(ctx):
     output = get_points_table(headers, body)
     ism = get_ism(conn)
 
+    conn.close()
     await ctx.message.add_reaction(THUMBS_UP)
     await ctx.send(f"```\n{ism}\n\n{title}\n\n{output}\n```")
-    conn.close()
 
 
 @bot.command(name='win', help='Record the winners of a game')
@@ -137,30 +138,34 @@ async def win(ctx):
         await ctx.message.add_reaction(THUMBS_DOWN)
         return
 
+    cursor_result = conn.cursor()
+
     sql_insert = """
         INSERT OR IGNORE INTO Magic_Internet_Points (Name)
         VALUES (?);
     """
+    cursor_result.executemany(sql_insert, all_players)
+
     sql_games = """
         UPDATE Magic_Internet_Points
         SET Games = Games + 1
         WHERE Name in (?,?,?,?,?,?,?,?,?,?);
     """
+    cursor_result.execute(sql_games, all_players)
+
     sql_wins = """
         UPDATE Magic_Internet_Points
         SET Wins = Wins + 1
         WHERE Name in (?,?,?,?,?);
     """
+    cursor_result.execute(sql_wins, winners)
+
     sql_old = """
         UPDATE Current_Game
         SET Active = 0
     """
-
-    cursor_result = conn.cursor()
-    cursor_result.executemany(sql_insert, all_players)
-    cursor_result.execute(sql_games, all_players)
-    cursor_result.execute(sql_wins, winners)
     cursor_result.execute(sql_old)
+
     conn.commit()
     conn.close()
 
