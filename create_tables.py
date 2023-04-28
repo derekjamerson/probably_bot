@@ -1,4 +1,4 @@
-from db_utilities import connect_to_db
+from utilities import connect_to_db
 
 
 def create_tables():

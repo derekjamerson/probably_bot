@@ -7,11 +7,12 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from db_utilities import connect_to_db
 from utilities import (
     THUMBS_DOWN,
     THUMBS_UP,
     calc_win_rate,
+    connect_to_db,
+    get_ism,
     get_points_table,
     get_teams_table,
 )
@@ -31,8 +32,8 @@ async def customs(ctx):
 
     member_names = [x.name for x in voice_state.channel.members]
 
-    # TESTING override member_names for testing
-    member_names = [str(num) for num in range(10)]
+    # # TESTING
+    # member_names = [str(num) for num in range(10)]
 
     members_count = len(member_names)
 
@@ -57,8 +58,6 @@ async def customs(ctx):
         body.append([blue_team[i], red_team[i]])
 
     output = get_teams_table(headers, body)
-    await ctx.message.add_reaction(THUMBS_UP)
-    await ctx.send(f"```\n{title}\n\n{output}\n```")
 
     sql_new = """
         INSERT INTO Current_Game (Blue, Red)
@@ -70,11 +69,17 @@ async def customs(ctx):
     """
 
     conn = connect_to_db()
+
+    ism = get_ism(conn)
+
     cursor = conn.cursor()
     cursor.execute(sql_old)
     cursor.execute(sql_new, (json.dumps(blue_team), json.dumps(red_team)))
     conn.commit()
     conn.close()
+
+    await ctx.message.add_reaction(THUMBS_UP)
+    await ctx.send(f"```\n{ism}\n\n{title}\n\n{output}\n```")
 
 
 @bot.command(name='points', help='Display Magic Internet Points')
@@ -99,16 +104,20 @@ async def magic_internet_points(ctx):
 
     title = '*** Magic Internet Points ***'
     output = get_points_table(headers, body)
+    ism = get_ism(conn)
 
     await ctx.message.add_reaction(THUMBS_UP)
-    await ctx.send(f"```\n{title}\n\n{output}\n```")
+    await ctx.send(f"```\n{ism}\n\n{title}\n\n{output}\n```")
     conn.close()
 
 
 @bot.command(name='win', help='Record the winners of a game')
 async def win(ctx):
-    author = ctx.author
-    author = '1'
+    author = ctx.author.display_name
+
+    # # TESTING
+    # author = '1'
+
     conn = connect_to_db()
     conn.row_factory = sqlite3.Row
     cursor_query = conn.cursor()
@@ -159,11 +168,12 @@ async def win(ctx):
     await magic_internet_points(ctx)
 
 
-@bot.command(name='isms', help='Add an "-ism"')
+@bot.command(name='isms', help='Add an "-ism" ("QUOTE" PERSON)')
 async def add_ism(ctx, quote, person=None):
-    author = ctx.author
+    author = ctx.author.display_name
     conn = connect_to_db()
     cursor = conn.cursor()
+
     sql = """
         INSERT INTO Isms (Person, Quote, Author)
         VALUES (?, ?, ?)
