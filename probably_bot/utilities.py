@@ -18,7 +18,7 @@ def calc_win_rate(wins, games):
 
 
 def connect_to_db():
-    return sqlite3.connect('./sqlite.db')
+    return sqlite3.connect('../sqlite.db')
 
 
 def get_ism(conn):

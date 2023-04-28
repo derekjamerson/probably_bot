@@ -6,7 +6,6 @@ import sqlite3
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-
 from utilities import (
     THUMBS_DOWN,
     THUMBS_UP,

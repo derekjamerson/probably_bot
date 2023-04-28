@@ -1,4 +1,4 @@
-from utilities import connect_to_db
+from probably_bot.utilities import connect_to_db
 
 
 def create_tables():
